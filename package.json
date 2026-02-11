@@ -1,0 +1,19 @@
+{
+	"name": "userscripts",
+	"version": "0.0.1",
+	"description": "A collection of my custom Tampermonkey Userscripts",
+	"type": "module",
+	"scripts": {
+		"format": "prettier --write ."
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Baipyrus/Userscripts.git"
+	},
+	"author": "Baipyrus",
+	"license": "ISC",
+	"homepage": "https://baipyr.us/",
+	"devDependencies": {
+		"prettier": "^3.8.1"
+	}
+}
