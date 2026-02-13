@@ -1,44 +1,38 @@
 // ==UserScript==
 // @name         50Plus puzzel solver
-// @namespace    https://eiflerstrom.de/
+// @namespace    https://baipyr.us/
 // @version      2026-02-13
 // @description  Solves some puzzels of the 50Plus website from the solution in the HTML
-// @author       IC3P3
+// @author       Baipyrus
 // @match        https://www.50plus.de/spiele/raetsel/*
-// @icon         https://www.startpage.com/sp/sxpra?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fe%2Fec%2F50PLUS_%2528nl%2529_Logo.svg%2F960px-50PLUS_%2528nl%2529_Logo.svg.png
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=50plus.de
 // @grant        none
 // ==/UserScript==
 
 (function () {
 	'use strict';
 
-	function solve() {
-		const solution = document.getElementsByClassName('sd-kwr-bg')[0].childNodes;
-		const solutionLetters = [...solution].map((el) => el.getAttribute('data-default'));
-		const input = document.getElementsByClassName('sd-kwr-input')[0].childNodes;
-		const keyboard = document.getElementsByTagName('keyboard')[0].getElementsByTagName('key');
+	// Wait for elements to load, then start solving the crossword
+	setTimeout(() => {
+		const crossword = document.querySelector('#dsgame > kwr');
 
-		solutionLetters.forEach((letter, index) => {
-			if (letter == '') return;
+		const [first, second] = crossword.children;
+		const solutionElements = first.children;
+		const inputElements = second.children;
 
-			input[index].dispatchEvent(new MouseEvent('mousedown'));
-			[...keyboard]
-				.find((key) => key.getAttribute('data-value') == letter.toUpperCase())
+		const solutionLetters = Array.from(solutionElements).map((b) => b.dataset.default);
+		const touchKeyboard = Array.from(document.querySelectorAll('#dsgame > keyboard key'));
+
+		// Loop over all empty crossword cells
+		solutionLetters.forEach((letter, idx) => {
+			if (letter === '') return;
+
+			// Select corresponding input elemnt of this crossword cell
+			inputElements[idx].dispatchEvent(new MouseEvent('mousedown'));
+			// Click the corresponding letter on the touch keyboard
+			touchKeyboard
+				.find((key) => key.dataset.value === letter.toUpperCase())
 				.dispatchEvent(new MouseEvent('mousedown'));
 		});
-	}
-
-	const button = document.createElement('button');
-	button.textContent = 'Solve Crossword';
-	button.style.position = 'absolute';
-	button.style.top = '-30px';
-	button.onclick = solve;
-
-	const interval = setInterval(() => {
-		const dsgame = document.querySelector('#dsgame kwr');
-		if (dsgame) {
-			dsgame.appendChild(button);
-			clearInterval(interval);
-		}
-	}, 500);
+	}, 1500);
 })();
