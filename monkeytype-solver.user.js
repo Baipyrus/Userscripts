@@ -9,14 +9,14 @@
 // @grant        none
 // ==/UserScript==
 
-(function() {
-    'use strict';
+(function () {
+	'use strict';
 
-    const interv = setInterval(() => {
-        const letters = [...document.querySelectorAll('.word.active > letter')];
-        const activeWord = letters.map(e => e.innerText).join('');
-        const wordsInput = document.querySelector('#wordsInput');
-        if (wordsInput.value.includes(activeWord)) return;
-        wordsInput.value += activeWord;
-    }, 100);
+	const interv = setInterval(() => {
+		const letters = [...document.querySelectorAll('.word.active > letter')];
+		const activeWord = letters.map((e) => e.innerText).join('');
+		const wordsInput = document.querySelector('#wordsInput');
+		if (wordsInput.value.includes(activeWord)) return;
+		wordsInput.value += activeWord;
+	}, 100);
 })();
