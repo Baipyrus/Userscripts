@@ -4,7 +4,7 @@
 // @version      2026-02-11
 // @description  Converts the Reddit URL when sharing a post to rxddit.com.
 // @author       Baipyrus
-// @match        https://www.reddit.com/
+// @match        https://www.reddit.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=reddit.com
 // @grant        none
 // ==/UserScript==
@@ -14,27 +14,35 @@
 
 	addEventListener(
 		'click',
-		(event) => {
-			/** @type {{target: HTMLElement?}} */
+		async (event) => {
+			const path = event.composedPath();
+			const isShareBtn =
+				path.some(
+					(element) =>
+						element.tagName === 'BUTTON' && element.textContent?.toLowerCase().includes('share')
+				) && !path.some((element) => element.tagName === 'PDP-BACK-BUTTON');
+
+			// `<shreddit-post-share-button>` has been found
+			if (!isShareBtn) return;
+			event.stopImmediatePropagation();
+			event.preventDefault();
+
 			const { target } = event;
-			if (target?.tagName !== 'SHREDDIT-POST') return;
+			/** @type {(HTMLElement & {permalink: string})?} */
+			const shredditPost = target?.closest('shreddit-post');
 
-			const shareBtn = target?.shareButtonRef?.value;
-			if (!shareBtn || !shareBtn?.permalink) return;
+			if (!shredditPost?.permalink) return;
+			const fxreddit = `https://rxddit.com${shredditPost.permalink}`;
 
-			shareBtn._copyLink = async () => {
-				const assembledLink = `https://rxddit.com${shareBtn.permalink}`;
+			try {
+				// Parse link with builtin URL constructor to verify format
+				new URL(fxreddit);
 
-				try {
-					const shareUrl = new URL(assembledLink);
-					if (!shareUrl.hostname === 'reddit.com') return;
-				} catch {
-					return;
-				}
-
-				const fxreddit = assembledLink.replace('reddit.com', 'rxddit.com');
+				// Try copying modified link to clipboard
 				navigator.clipboard.writeText(fxreddit);
-			};
+
+				shredditPost.closeShareMenu();
+			} catch {}
 		},
 		true
 	);
