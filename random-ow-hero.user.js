@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Random OW Hero Selector
 // @namespace    https://baipyr.us/
-// @version      2026-10-26
+// @version      2026-10-27
 // @description  Addss a button to pick a random character of the selected roles for you!
 // @author       Baipyrus
 // @match        https://overwatch.blizzard.com/en-us/heroes/
@@ -13,6 +13,7 @@
 	'use strict';
 
 	// Minimal tweakable behavior
+	const SCROLL_DIST_TOLERANCE = 1;
 	const ZOOM_FACTOR = 2;
 	const ZOOM_MS = 100;
 	const EMPTY = 0;
@@ -213,13 +214,25 @@
 		closeSelection();
 		const run = runId;
 
-		// Wait until 'scrolled' event marks animation finish
+		// Calculate the y coordinate we're trying to scroll to
 		if (card.getClientRects().length === EMPTY) return;
-		const scrolled = new Promise((resolve) =>
-			document.addEventListener('scrollend', resolve, { once: true })
-		);
-		card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-		await scrolled;
+		const rect = card.getBoundingClientRect();
+		const targetTop = window.scrollY + rect.top - (window.innerHeight - rect.height) / 2;
+
+		// Clamp to a real value the page can actually scroll to
+		const maxTop = document.documentElement.scrollHeight - window.innerHeight;
+		const clamped = Math.max(0, Math.min(targetTop, maxTop));
+
+		// Not yet reached the element (with subpixel tolerance)
+		if (Math.abs(clamped - window.scrollY) >= SCROLL_DIST_TOLERANCE) {
+			// Hook up 'scrollend' to a promise we can await
+			const scrolled = new Promise((resolve) =>
+				document.addEventListener('scrollend', resolve, { once: true })
+			);
+			// Begin scrolling to element and wait
+			card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			await scrolled;
+		}
 
 		// If another hero selection has been started, we can ignore the rest from here
 		if (run !== runId) return;
@@ -230,11 +243,10 @@
 
 		const vh = document.documentElement.clientHeight;
 		const vw = document.documentElement.clientWidth;
-		const from = card.getBoundingClientRect();
 
 		// Calculate zoomed size with a bare minimum in mind
 		const minZoomWidthPX = 300;
-		const targetW = Math.max(from.width * ZOOM_FACTOR, minZoomWidthPX);
+		const targetW = Math.max(rect.width * ZOOM_FACTOR, minZoomWidthPX);
 
 		// Global background dimming using slightly transparent grey sheet
 		const backdrop = document.createElement('div');
@@ -251,9 +263,9 @@
 		document.body.append(backdrop, centeredCard);
 
 		// Start exactly on top of the grid card, then grow into the centre of the screen
-		const dx = from.left + from.width * HALF - vw * HALF;
-		const dy = from.top + from.height * HALF - vh * HALF;
-		const startScale = from.width / targetW;
+		const dx = rect.left + rect.width * HALF - vw * HALF;
+		const dy = rect.top + rect.height * HALF - vh * HALF;
+		const startScale = rect.width / targetW;
 
 		centeredCard.animate(
 			[
